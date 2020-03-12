@@ -14,10 +14,9 @@ function print_help {
   echo "Commands: setup, clear, on, off"
 }
 
-function cfg {
-  jq -er "$1" "$CFG"; jq_ret=$?
-  if [ $jq_ret -ne 0 ]; then echo "cfg: $1" >&2; fi
-  exit $jq_ret
+function cfgerr {
+  echo "cfg: $1 should be set"
+  exit 2
 }
 
 if [ "$CFG" == "" ] || ! [ -e "$CFG" ]; then 
@@ -25,23 +24,40 @@ if [ "$CFG" == "" ] || ! [ -e "$CFG" ]; then
   exit 1
 fi
 
-ENDPOINT=$(cfg '.endpoint') || exit 2
-NETWORK=$(cfg '.network') || exit 2
-GATEWAY=$(cfg '.gateway') || exit 2
-DEVICE=$(cfg '.device') || exit 2
-CHAIN=$(cfg '.chain') || exit 2
+DEVICE="tun+"
+FINAL_RULE="DROP"
+INSERT_TO="A"
+CHAIN="ovpn_leak"
+
+C_OUT="OUTPUT"
+C_FWD="FORWARD"
+C_PRE="PREROUTING"
+C_PST="POSTROUTING"
+
+while read -r key; do
+  read -r val
+  case "$key" in 
+    'endpoint') ENDPOINT="$val";;
+    'network') NETWORK="$val";;
+    'gateway') GATEWAY="$val";;
+    'device') DEVICE="$val";;
+    'chain') CHAIN="$val";;
+    'final_rule') FINAL_RULE="$val";;
+    'insert_to') INSERT_TO="$val";;
+    'output_chain') C_OUT="$val";;
+    'forward_chain') C_FWD="$val";;
+    'nat_prerouting_chain') C_PRE="$val";;
+    'nat_postrouting_chain') C_PST="$val";;
+  esac
+done < <(jq -er '. | to_entries | .[] | .key + "\n" + .value' "$CFG") || exit 2
+
+[ "$ENDPOINT" != "" ] || cfgerr "endpoint"
+[ "$NETWORK" != "" ] || cfgerr "network"
+[ "$GATEWAY" != "" ] || cfgerr "gateway"
 
 CHAIN_FWD="${CHAIN}_fwd"
 CHAIN_PRE="${CHAIN}_nat_pre"
 CHAIN_PST="${CHAIN}_nat_post"
-
-FINAL_RULE=$(cfg '.final_rule') || exit 2
-INSERT_TO=$(cfg '.insert_to') || exit 2
-
-C_OUT=$(cfg '.output_chain') || exit 2
-C_FWD=$(cfg '.forward_chain') || exit 2
-C_PRE=$(cfg '.nat_prerouting_chain') || exit 2
-C_PST=$(cfg '.nat_postrouting_chain') || exit 2
 
 case "$INSERT_TO" in 
   'A') I_ARG='-A';;
