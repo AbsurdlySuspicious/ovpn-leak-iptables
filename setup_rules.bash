@@ -122,6 +122,9 @@ fi
 
 if mode "setup"; then
   new_chain filter $CHAIN || exit 3
+  new_chain filter $CHAIN_FWD
+  new_chain nat $CHAIN_PRE
+  new_chain nat $CHAIN_PST
 
   for i in $(seq 0 "$EP_C"); do
     E_DEV="${DEVICE[$i]}"; E_EP="${ENDPOINT[$i]}"
@@ -131,20 +134,16 @@ if mode "setup"; then
     iptables -A $CHAIN -d $E_NET ! -o $E_DEV -j DROP 2>/dev/null # todo option
     iptables -A $CHAIN -s $E_NET -o $E_DEV -j ACCEPT 2>/dev/null
     iptables -A $CHAIN -d $E_EP -j ACCEPT
+
+    iptables -A $CHAIN_FWD -d $E_GW -j ACCEPT
+    iptables -t nat -A $CHAIN_PRE -d $E_EP -j DNAT --to-destination $E_GW
+    iptables -t nat -A $CHAIN_PST -d $E_GW -o $E_DEV -j MASQUERADE
   done
 
   iptables -A $CHAIN -d 127.0.0.0/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j ACCEPT
   iptables -A $CHAIN -m state --state RELATED,ESTABLISHED -j ACCEPT
   iptables -A $CHAIN -j $FINAL_RULE
 
-  new_chain filter $CHAIN_FWD
-  iptables -A $CHAIN_FWD -d $GATEWAY -j ACCEPT
-
-  new_chain nat $CHAIN_PRE
-  iptables -t nat -A $CHAIN_PRE -d $ENDPOINT -j DNAT --to-destination $GATEWAY
-
-  new_chain nat $CHAIN_PST
-  iptables -t nat -A $CHAIN_PST -d $GATEWAY -o $DEVICE -j MASQUERADE
 fi
 
 if mode "clean"; then
