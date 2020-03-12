@@ -38,7 +38,7 @@ CHAIN_PST="${CHAIN}_nat_post"
 FINAL_RULE=$(cfg '.final_rule') || exit 2
 INSERT_TO=$(cfg '.insert_to') || exit 2
 
-C_INP=$(cfg '.input_chain') || exit 2
+C_OUT=$(cfg '.output_chain') || exit 2
 C_FWD=$(cfg '.forward_chain') || exit 2
 C_PRE=$(cfg '.nat_prerouting_chain') || exit 2
 C_PST=$(cfg '.nat_postrouting_chain') || exit 2
@@ -71,7 +71,7 @@ function del_chain {
 }
 
 function toggle {
-  inject $1 filter $C_INP -j $CHAIN
+  inject $1 filter $C_OUT -j $CHAIN
   inject $1 filter $C_FWD -j $CHAIN_FWD
   inject $1 nat $C_PRE -j $CHAIN_PRE
   inject $1 nat $C_PST -j $CHAIN_PST

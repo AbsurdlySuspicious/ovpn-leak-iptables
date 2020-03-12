@@ -6,8 +6,8 @@
   "chain": "ovpn_leak",
   "final_rule": "DROP",
   "insert_to": "A",
-  "input_chain": "INPUT",
-  "forward_chain": "FROWARD",
+  "output_chain": "OUTPUT",
+  "forward_chain": "FORWARD",
   "nat_prerouting_chain": "PREROUTING",
   "nat_postrouting_chain": "POSTROUTING"
 }
