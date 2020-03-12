@@ -91,7 +91,7 @@ if mode "setup"; then
   iptables -A $CHAIN -d $ENDPOINT -j ACCEPT
   iptables -A $CHAIN -d 127.0.0.0/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j ACCEPT
   iptables -A $CHAIN -m state --state RELATED,ESTABLISHED -j ACCEPT
-  iptables -A $CHAIN -j "$FINAL_RULE"
+  iptables -A $CHAIN -j $FINAL_RULE
 
   new_chain filter $CHAIN_FWD
   iptables -A $CHAIN_FWD -d $ENDPOINT -j ACCEPT
