@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2086
 
 MODE=$1
 CFG=$2
@@ -89,8 +90,8 @@ function inject {
   chain=$1; shift
 
   case "$mode" in
-    'add') iptables -t "$table" "$I_ARG" "$chain" $I_IDX $@;;
-    'del') iptables -t "$table" -D "$chain" $@;;
+    'add') iptables -t "$table" "$I_ARG" "$chain" $I_IDX "$@";;
+    'del') iptables -t "$table" -D "$chain" "$@";;
   esac
 }
 
