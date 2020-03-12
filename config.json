@@ -1,0 +1,8 @@
+{
+  "endpoint": "x.x.x.x",
+  "network": "10.8.0.0/24",
+  "gateway": "10.8.0.1",
+  "device": "tun+",
+  "chain": "ovpn_leak"
+}
+
