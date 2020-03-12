@@ -3,6 +3,12 @@
   "network": "10.8.0.0/24",
   "gateway": "10.8.0.1",
   "device": "tun+",
-  "chain": "ovpn_leak"
+  "chain": "ovpn_leak",
+  "final_rule": "DROP",
+  "insert_to": "A",
+  "input_chain": "INPUT",
+  "forward_chain": "FROWARD",
+  "nat_prerouting_chain": "PREROUTING",
+  "nat_postrouting_chain": "POSTROUTING"
 }
 
