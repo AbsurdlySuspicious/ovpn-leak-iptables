@@ -94,13 +94,13 @@ if mode "setup"; then
   iptables -A $CHAIN -j $FINAL_RULE
 
   new_chain filter $CHAIN_FWD
-  iptables -A $CHAIN_FWD -d $ENDPOINT -j ACCEPT
+  iptables -A $CHAIN_FWD -d $GATEWAY -j ACCEPT
 
   new_chain nat $CHAIN_PRE
   iptables -t nat -A $CHAIN_PRE -d $ENDPOINT -j DNAT --to-destination $GATEWAY
 
   new_chain nat $CHAIN_PST
-  iptables -t nat -A $CHAIN_PST -d $ENDPOINT -o $DEVICE -j MASQUERADE
+  iptables -t nat -A $CHAIN_PST -d $GATEWAY -o $DEVICE -j MASQUERADE
 fi
 
 if mode "clean"; then
