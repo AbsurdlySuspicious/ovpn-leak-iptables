@@ -88,6 +88,7 @@ fi
 if mode "setup"; then
   new_chain filter $CHAIN || exit 3
   iptables -A $CHAIN -d $NETWORK ! -o $DEVICE -j DROP
+  iptables -A $CHAIN -s $NETWORK -o $DEVICE -j ACCEPT
   iptables -A $CHAIN -d $ENDPOINT -j ACCEPT
   iptables -A $CHAIN -d 127.0.0.0/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j ACCEPT
   iptables -A $CHAIN -m state --state RELATED,ESTABLISHED -j ACCEPT
