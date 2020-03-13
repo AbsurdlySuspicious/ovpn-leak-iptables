@@ -25,7 +25,6 @@ if [ "$CFG" == "" ] || ! [ -e "$CFG" ]; then
   exit 1
 fi
 
-DEFAULT_DEVICE="tun+"
 FINAL_RULE="DROP"
 INSERT_TO="A"
 CHAIN="ovpn_leak"
@@ -35,44 +34,37 @@ CHAIN_FORWARD="FORWARD"
 CHAIN_NAT_PREROUTING="PREROUTING"
 CHAIN_NAT_POSTROUTING="POSTROUTING"
 
-EP_C=0
+_ep=0
+_has_strict=0
 
-while read -r key; do
-  if [ "$EP_END" != "1" ]; then 
-    case "$key" in 
-      "==")
-        (( EP_C++ ))
-        continue;;
-      "==options==")
-        EP_END=1
-        continue;;
-    esac
+function ep_unset {
+  ep_server=""; ep_network=""; ep_gateway="";
+  ep_device="tun+"; ep_strict=0; ep_strict_icmp=1;
+  ep_strict_udp=""; ep_strict_tcp="";
+}
 
-    read -r val
-    case "$key" in
-      'endpoint') ENDPOINT[$EP_C]="$val";;
-      'network') NETWORK[$EP_C]="$val";;
-      'gateway') GATEWAY[$EP_C]="$val";;
-      'device') DEVICE[$EP_C]="$val";;
-    esac
-  else
-    read -r val
-    case "$key" in 
-      'chain') CHAIN="$val";;
-      'final_rule') FINAL_RULE="$val";;
-      'insert_to') INSERT_TO="$val";;
-      'output_chain') C_OUT="$val";;
-      'forward_chain') C_FWD="$val";;
-      'nat_prerouting_chain') C_PRE="$val";;
-      'nat_postrouting_chain') C_PST="$val";;
-    esac
+function ep_commit {
+  [ "$ep_server" != "" ] || cfgerr "endpoint ($_ep)"
+  [ "$ep_network" != "" ] || cfgerr "network ($_ep)"
+  [ "$ep_strict" != "1" -o "$ep_gateway" != "" ] || cfgerr "gateway ($ep)"
+
+  ENDPOINT[$_ep]=$ep_server
+  NETWORK[$_ep]=$ep_network
+  GATEWAY[$_ep]=$ep_gateway
+
+  if [ "$ep_strict" == 1 ]; then
+    _has_strict=1
+    STRICT_ICMP[$_ep]="$ep_strict_icmp"
+    STRICT_TCP[$_ep]="$ep_strict_tcp"
+    STRICT_UDP[$_ep]="$ep_strict_udp"
   fi
-done < <(jq -er '(.endpoints | .[] | (. | to_entries | .[] | .key, .value), "=="),
-"==options==", (.options | to_entries | .[] | .key, .value)' "$CFG") || exit 2
 
-[ "${#ENDPOINT[*]}" -ne "$EP_C" ] || cfgerr "endpoint"
-[ "${#NETWORK[*]}" -ne "$EP_C" ] || cfgerr "network"
-[ "${#GATEWAY[*]}" -ne "$EP_C" ] || cfgerr "gateway"
+  ep_unset
+  (( _ep++ ))
+}
+
+ep_unset
+source "$CFG"
 
 TCHAIN_FWD="${CHAIN}_fwd"
 TCHAIN_PRE="${CHAIN}_nat_pre"
@@ -122,22 +114,36 @@ fi
 
 if mode "setup"; then
   new_chain filter $CHAIN || exit 3
-  new_chain filter $TCHAIN_FWD
-  new_chain nat $TCHAIN_PRE
-  new_chain nat $TCHAIN_PST
 
-  for i in $(seq 0 "$EP_C"); do
+  if [ "$_has_strict" == 1 ]; then
+    new_chain filter $TCHAIN_FWD
+    new_chain nat $TCHAIN_PRE
+    new_chain nat $TCHAIN_PST
+  fi
+
+  for i in $(seq 0 "$_ep"); do
     E_DEV="${DEVICE[$i]}"; E_EP="${ENDPOINT[$i]}"
     E_GW="${GATEWAY[$i]}"; E_NET="${NETWORK[$i]}"
-    [ "$E_DEV" != "" ] || E_DEV="$DEFAULT_DEVICE"
+    E_ST_ICMP="${STRICT_ICMP[$i]}";
+    E_ST_UDP="${STRICT_UDP[$i]}";
+    E_ST_TCP="${STRICT_TCP[$i]}";
 
     iptables -A $CHAIN -d $E_NET ! -o $E_DEV -j DROP 2>/dev/null # todo option
     iptables -A $CHAIN -s $E_NET -o $E_DEV -j ACCEPT 2>/dev/null
-    iptables -A $CHAIN -d $E_EP -j ACCEPT
 
-    iptables -A $TCHAIN_FWD -d $E_GW -j ACCEPT
-    iptables -t nat -A $TCHAIN_PRE -d $E_EP -j DNAT --to-destination $E_GW
-    iptables -t nat -A $TCHAIN_PST -d $E_GW -o $E_DEV -j MASQUERADE
+    if [ "$E_ST_ICMP" == "" ]; then
+      iptables -A $CHAIN -d $E_EP -j ACCEPT
+    else
+      if [ "$E_ST_ICNP" == 1 ]; then 
+        iptables -A $CHAIN -d $E_EP -p icmp -j ACCEPT
+      else 
+        false
+      fi
+
+      iptables -A $TCHAIN_FWD -d $E_GW -j ACCEPT
+      iptables -t nat -A $TCHAIN_PRE -d $E_EP -j DNAT --to-destination $E_GW
+      iptables -t nat -A $TCHAIN_PST -d $E_GW -o $E_DEV -j MASQUERADE
+    fi
   done
 
   iptables -A $CHAIN -d 127.0.0.0/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j ACCEPT
