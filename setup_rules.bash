@@ -67,7 +67,6 @@ function ep_commit {
 ep_unset
 source "$CFG"
 
-TCHAIN_FWD="${CHAIN}_fwd"
 TCHAIN_NAT_OUT="${CHAIN}_nat_out"
 TCHAIN_NAT_POST="${CHAIN}_nat_post"
 
@@ -100,7 +99,6 @@ function del_chain {
 
 function toggle {
   inject $1 filter $CHAIN_OUTPUT -j $CHAIN
-  inject $1 filter $CHAIN_FORWARD -j $TCHAIN_FWD 2>/dev/null
   inject $1 nat $CHAIN_NAT_OUTPUT -j $TCHAIN_NAT_OUT 2>/dev/null
   inject $1 nat $CHAIN_NAT_POSTROUTING -j $TCHAIN_NAT_POST 2>/dev/null
 }
@@ -117,7 +115,6 @@ if mode "setup"; then
   new_chain filter $CHAIN || exit 3
 
   if [ "$_has_strict" == 1 ]; then
-    new_chain filter $TCHAIN_FWD
     new_chain nat $TCHAIN_NAT_OUT
     new_chain nat $TCHAIN_NAT_POST
   fi
@@ -149,7 +146,6 @@ if mode "setup"; then
         iptables -t nat -A $TCHAIN_NAT_OUT -d $E_EP -p tcp -m multiport --dports "$E_ST_TCP" -j RETURN
       fi
 
-      # iptables -A $TCHAIN_FWD -d $E_GW -j ACCEPT
       iptables -t nat -A $TCHAIN_NAT_OUT -d $E_EP -j DNAT --to-destination $E_GW
       iptables -t nat -A $TCHAIN_NAT_POST -d $E_GW -o $E_DEV -j MASQUERADE
     fi
@@ -164,7 +160,6 @@ fi
 if mode "clean"; then
   toggle del 2>/dev/null
   del_chain filter $CHAIN
-  del_chain filter  $TCHAIN_FWD 2>/dev/null
   del_chain nat $TCHAIN_NAT_OUT 2>/dev/null
   del_chain nat $TCHAIN_NAT_POST 2>/dev/null
 fi
