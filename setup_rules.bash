@@ -74,9 +74,9 @@ done < <(jq -er '(.endpoints | .[] | (. | to_entries | .[] | .key, .value), "=="
 [ "${#NETWORK[*]}" -ne "$EP_C" ] || cfgerr "network"
 [ "${#GATEWAY[*]}" -ne "$EP_C" ] || cfgerr "gateway"
 
-CHAIN_FWD="${CHAIN}_fwd"
-CHAIN_PRE="${CHAIN}_nat_pre"
-CHAIN_PST="${CHAIN}_nat_post"
+TCHAIN_FWD="${CHAIN}_fwd"
+TCHAIN_PRE="${CHAIN}_nat_pre"
+TCHAIN_PST="${CHAIN}_nat_post"
 
 case "$INSERT_TO" in 
   'A') I_ARG='-A';;
@@ -107,9 +107,9 @@ function del_chain {
 
 function toggle {
   inject $1 filter $CHAIN_OUTPUT -j $CHAIN
-  inject $1 filter $CHAIN_FORWARD -j $CHAIN_FWD 2>/dev/null
-  inject $1 nat $CHAIN_NAT_PREROUTING -j $CHAIN_PRE 2>/dev/null
-  inject $1 nat $CHAIN_NAT_POSTROUTING -j $CHAIN_PST 2>/dev/null
+  inject $1 filter $CHAIN_FORWARD -j $TCHAIN_FWD 2>/dev/null
+  inject $1 nat $CHAIN_NAT_PREROUTING -j $TCHAIN_PRE 2>/dev/null
+  inject $1 nat $CHAIN_NAT_POSTROUTING -j $TCHAIN_PST 2>/dev/null
 }
 
 if mode "on"; then
@@ -122,9 +122,9 @@ fi
 
 if mode "setup"; then
   new_chain filter $CHAIN || exit 3
-  new_chain filter $CHAIN_FWD
-  new_chain nat $CHAIN_PRE
-  new_chain nat $CHAIN_PST
+  new_chain filter $TCHAIN_FWD
+  new_chain nat $TCHAIN_PRE
+  new_chain nat $TCHAIN_PST
 
   for i in $(seq 0 "$EP_C"); do
     E_DEV="${DEVICE[$i]}"; E_EP="${ENDPOINT[$i]}"
@@ -135,9 +135,9 @@ if mode "setup"; then
     iptables -A $CHAIN -s $E_NET -o $E_DEV -j ACCEPT 2>/dev/null
     iptables -A $CHAIN -d $E_EP -j ACCEPT
 
-    iptables -A $CHAIN_FWD -d $E_GW -j ACCEPT
-    iptables -t nat -A $CHAIN_PRE -d $E_EP -j DNAT --to-destination $E_GW
-    iptables -t nat -A $CHAIN_PST -d $E_GW -o $E_DEV -j MASQUERADE
+    iptables -A $TCHAIN_FWD -d $E_GW -j ACCEPT
+    iptables -t nat -A $TCHAIN_PRE -d $E_EP -j DNAT --to-destination $E_GW
+    iptables -t nat -A $TCHAIN_PST -d $E_GW -o $E_DEV -j MASQUERADE
   done
 
   iptables -A $CHAIN -d 127.0.0.0/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j ACCEPT
@@ -149,9 +149,9 @@ fi
 if mode "clean"; then
   toggle del
   del_chain filter $CHAIN
-  del_chain filter  $CHAIN_FWD 2>/dev/null
-  del_chain nat $CHAIN_PRE 2>/dev/null
-  del_chain nat $CHAIN_PST 2>/dev/null
+  del_chain filter  $TCHAIN_FWD 2>/dev/null
+  del_chain nat $TCHAIN_PRE 2>/dev/null
+  del_chain nat $TCHAIN_PST 2>/dev/null
 fi
 
 if [ "$VALID_MODE" != "1" ]; then
