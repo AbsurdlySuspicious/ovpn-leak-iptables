@@ -129,7 +129,6 @@ if mode "setup"; then
     E_ST_UDP="${STRICT_UDP[$i]}";
     E_ST_TCP="${STRICT_TCP[$i]}";
 
-    iptables -A $CHAIN -d $E_NET ! -o $E_DEV -j DROP 2>/dev/null # todo option
     iptables -A $CHAIN -s $E_NET -o $E_DEV -j ACCEPT 2>/dev/null
 
     if [ "$E_ST_ICMP" == "" ]; then
