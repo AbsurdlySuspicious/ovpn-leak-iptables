@@ -1,8 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC2086 source=cfg.bash
 
-MODE=$1
-CFG=$2
+CFG=$1
+MODE=$2
 
 function mode {
   [ "$MODE" == "$1" ] || return 1
@@ -11,7 +11,7 @@ function mode {
 }
 
 function print_help {
-  echo "Usage: leak-rules <COMMAND> <CONFIG>"
+  echo "Usage: leak-rules <CONFIG> <COMMAND>"
   echo "Commands: setup, clear, on, off"
 }
 
