@@ -30,10 +30,10 @@ FINAL_RULE="DROP"
 INSERT_TO="A"
 CHAIN="ovpn_leak"
 
-C_OUT="OUTPUT"
-C_FWD="FORWARD"
-C_PRE="PREROUTING"
-C_PST="POSTROUTING"
+CHAIN_OUTPUT="OUTPUT"
+CHAIN_FORWARD="FORWARD"
+CHAIN_NAT_PREROUTING="PREROUTING"
+CHAIN_NAT_POSTROUTING="POSTROUTING"
 
 EP_C=0
 
@@ -106,10 +106,10 @@ function del_chain {
 }
 
 function toggle {
-  inject $1 filter $C_OUT -j $CHAIN
-  inject $1 filter $C_FWD -j $CHAIN_FWD 2>/dev/null
-  inject $1 nat $C_PRE -j $CHAIN_PRE 2>/dev/null
-  inject $1 nat $C_PST -j $CHAIN_PST 2>/dev/null
+  inject $1 filter $CHAIN_OUTPUT -j $CHAIN
+  inject $1 filter $CHAIN_FORWARD -j $CHAIN_FWD 2>/dev/null
+  inject $1 nat $CHAIN_NAT_PREROUTING -j $CHAIN_PRE 2>/dev/null
+  inject $1 nat $CHAIN_NAT_POSTROUTING -j $CHAIN_PST 2>/dev/null
 }
 
 if mode "on"; then
