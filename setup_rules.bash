@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC2086
+# shellcheck disable=SC2086 source=cfg.bash
 
 MODE=$1
 CFG=$2
@@ -31,7 +31,7 @@ CHAIN="ovpn_leak"
 
 CHAIN_OUTPUT="OUTPUT"
 CHAIN_FORWARD="FORWARD"
-CHAIN_NAT_PREROUTING="PREROUTING"
+CHAIN_NAT_OUTPUT="OUTPUT"
 CHAIN_NAT_POSTROUTING="POSTROUTING"
 
 _ep=0
@@ -46,11 +46,12 @@ function ep_unset {
 function ep_commit {
   [ "$ep_server" != "" ] || cfgerr "endpoint ($_ep)"
   [ "$ep_network" != "" ] || cfgerr "network ($_ep)"
-  [ "$ep_strict" != "1" -o "$ep_gateway" != "" ] || cfgerr "gateway ($ep)"
+  [ "$ep_strict" != "1" ] || [ "$ep_gateway" != "" ] || cfgerr "gateway ($_ep)"
 
   ENDPOINT[$_ep]=$ep_server
   NETWORK[$_ep]=$ep_network
   GATEWAY[$_ep]=$ep_gateway
+  DEVICE[$_ep]=$ep_device
 
   if [ "$ep_strict" == 1 ]; then
     _has_strict=1
@@ -67,8 +68,8 @@ ep_unset
 source "$CFG"
 
 TCHAIN_FWD="${CHAIN}_fwd"
-TCHAIN_PRE="${CHAIN}_nat_pre"
-TCHAIN_PST="${CHAIN}_nat_post"
+TCHAIN_NAT_OUT="${CHAIN}_nat_out"
+TCHAIN_NAT_POST="${CHAIN}_nat_post"
 
 case "$INSERT_TO" in 
   'A') I_ARG='-A';;
@@ -100,8 +101,8 @@ function del_chain {
 function toggle {
   inject $1 filter $CHAIN_OUTPUT -j $CHAIN
   inject $1 filter $CHAIN_FORWARD -j $TCHAIN_FWD 2>/dev/null
-  inject $1 nat $CHAIN_NAT_PREROUTING -j $TCHAIN_PRE 2>/dev/null
-  inject $1 nat $CHAIN_NAT_POSTROUTING -j $TCHAIN_PST 2>/dev/null
+  inject $1 nat $CHAIN_NAT_OUTPUT -j $TCHAIN_NAT_OUT 2>/dev/null
+  inject $1 nat $CHAIN_NAT_POSTROUTING -j $TCHAIN_NAT_POST 2>/dev/null
 }
 
 if mode "on"; then
@@ -117,11 +118,11 @@ if mode "setup"; then
 
   if [ "$_has_strict" == 1 ]; then
     new_chain filter $TCHAIN_FWD
-    new_chain nat $TCHAIN_PRE
-    new_chain nat $TCHAIN_PST
+    new_chain nat $TCHAIN_NAT_OUT
+    new_chain nat $TCHAIN_NAT_POST
   fi
 
-  for i in $(seq 0 "$_ep"); do
+  for i in $(seq 0 "$(( _ep-1 ))"); do
     E_DEV="${DEVICE[$i]}"; E_EP="${ENDPOINT[$i]}"
     E_GW="${GATEWAY[$i]}"; E_NET="${NETWORK[$i]}"
     E_ST_ICMP="${STRICT_ICMP[$i]}";
@@ -134,15 +135,24 @@ if mode "setup"; then
     if [ "$E_ST_ICMP" == "" ]; then
       iptables -A $CHAIN -d $E_EP -j ACCEPT
     else
-      if [ "$E_ST_ICNP" == 1 ]; then 
+      if [ "$E_ST_ICMP" == 1 ]; then 
         iptables -A $CHAIN -d $E_EP -p icmp -j ACCEPT
-      else 
-        false
+        iptables -t nat -A $TCHAIN_NAT_OUT -d $E_EP -p icmp -j RETURN
       fi
 
-      iptables -A $TCHAIN_FWD -d $E_GW -j ACCEPT
-      iptables -t nat -A $TCHAIN_PRE -d $E_EP -j DNAT --to-destination $E_GW
-      iptables -t nat -A $TCHAIN_PST -d $E_GW -o $E_DEV -j MASQUERADE
+      if [ "$E_ST_UDP" != "" ]; then 
+        iptables -A $CHAIN -d $E_EP -p udp -m multiport --dports "$E_ST_UDP" -j ACCEPT
+        iptables -t nat -A $TCHAIN_NAT_OUT -d $E_EP -p udp -m multiport --dports "$E_ST_UDP" -j RETURN
+      fi
+
+      if [ "$E_ST_TCP" != "" ]; then 
+        iptables -A $CHAIN -d $E_EP -p tcp -m multiport --dports "$E_ST_TCP" -j ACCEPT
+        iptables -t nat -A $TCHAIN_NAT_OUT -d $E_EP -p tcp -m multiport --dports "$E_ST_TCP" -j RETURN
+      fi
+
+      # iptables -A $TCHAIN_FWD -d $E_GW -j ACCEPT
+      iptables -t nat -A $TCHAIN_NAT_OUT -d $E_EP -j DNAT --to-destination $E_GW
+      iptables -t nat -A $TCHAIN_NAT_POST -d $E_GW -o $E_DEV -j MASQUERADE
     fi
   done
 
@@ -153,11 +163,11 @@ if mode "setup"; then
 fi
 
 if mode "clean"; then
-  toggle del
+  toggle del 2>/dev/null
   del_chain filter $CHAIN
   del_chain filter  $TCHAIN_FWD 2>/dev/null
-  del_chain nat $TCHAIN_PRE 2>/dev/null
-  del_chain nat $TCHAIN_PST 2>/dev/null
+  del_chain nat $TCHAIN_NAT_OUT 2>/dev/null
+  del_chain nat $TCHAIN_NAT_POST 2>/dev/null
 fi
 
 if [ "$VALID_MODE" != "1" ]; then
