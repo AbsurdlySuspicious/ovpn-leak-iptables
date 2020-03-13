@@ -1,7 +1,0 @@
-{
-  "endpoint": "95.216.137.11",
-  "network": "10.8.1.0/24",
-  "gateway": "10.8.1.1",
-  "chain": "ovpn_leak"
-}
-
