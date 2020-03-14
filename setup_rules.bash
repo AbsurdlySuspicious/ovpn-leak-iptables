@@ -1,8 +1,41 @@
 #!/bin/bash
 # shellcheck disable=SC2086 source=cfg.bash
 
-CFG=$1
-MODE=$2
+function print_help {
+  echo "Usage: ovpn-leak [-c <CONFIG>] <MODE>"
+  echo "Modes: setup, clear, on, off"
+}
+
+while [ "$1" != "" ]; do
+  case "$1" in
+    '-h'|'--help')
+      print_help
+      exit 0 ;;
+    '-c')
+      [ "$CFG" == "" ] || echo "Config should be specified only once"; exit 2
+      [ "$2" != "" ] || echo "Config should be specifed after -c"; exit 2
+      CFG="$2"; shift 2 ;;
+    *)
+      [ "$MODE" == "" ] || echo "Unknown arg: $1"; exit 2
+      MODE="$1"
+      shift ;;
+  esac
+done
+
+if [ "$CFG" == "" ]; then
+  CFG=$XDG_CONFIG_HOME
+  [ "$CFG" != "" ] || { [ "$HOME" != "" ] && CFG="$HOME/.config" } || exit 2
+  CFG="$CFG/ovpn-leak/config"
+  echo "Using default config: $CFG"
+fi
+
+if ! [ -f "$CFG" ]; then
+  echo "Config $CFG doesn't exist"; exit 2
+fi
+
+if [ "$MODE" == "" ]; then
+  echo "Mode should be specified"; exit 2
+fi
 
 function mode {
   [ "$MODE" == "$1" ] || return 1
@@ -10,20 +43,10 @@ function mode {
   VALID_MODE=1
 }
 
-function print_help {
-  echo "Usage: leak-rules <CONFIG> <COMMAND>"
-  echo "Commands: setup, clear, on, off"
-}
-
 function cfgerr {
   echo "cfg: $1 should be set"
   exit 2
 }
-
-if [ "$CFG" == "" ] || ! [ -e "$CFG" ]; then 
-  print_help
-  exit 1
-fi
 
 FINAL_RULE="DROP"
 INSERT_TO="A"
@@ -118,7 +141,7 @@ if mode "off"; then
   toggle del
 fi
 
-if mode "clean"; then
+if mode "clear"; then
   clean
 fi
 
@@ -169,7 +192,7 @@ if mode "setup"; then
 
 fi
 
-if [ "$VALID_MODE" != "1" ]; then
+if [ "$VALID_MODE" != 1 ]; then
   print_help
   exit 1
 fi
