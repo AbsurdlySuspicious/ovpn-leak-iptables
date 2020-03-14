@@ -12,11 +12,14 @@ while [ "$1" != "" ]; do
       print_help
       exit 0 ;;
     '-c')
-      [ "$CFG" == "" ] || echo "Config should be specified only once"; exit 2
-      [ "$2" != "" ] || echo "Config should be specifed after -c"; exit 2
+      [ "$CFG" == "" ] || { echo "Config should be specified only once"; exit 2; }
+      [ "$2" != "" ] || { echo "Config should be specifed after -c"; exit 2; }
       CFG="$2"; shift 2 ;;
+    -*)
+      echo "Unknown arg: $1"
+      exit 2 ;;
     *)
-      [ "$MODE" == "" ] || echo "Unknown arg: $1"; exit 2
+      [ "$MODE" == "" ] || { echo "Unknown arg: $1"; exit 2; }
       MODE="$1"
       shift ;;
   esac
