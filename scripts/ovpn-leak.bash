@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC2086 source=cfg.bash
+# shellcheck disable=SC2086 source=config_example
 
 function print_help {
   echo "Usage: ovpn-leak [-c <CONFIG>] <MODE>"
@@ -24,7 +24,7 @@ done
 
 if [ "$CFG" == "" ]; then
   CFG=$XDG_CONFIG_HOME
-  [ "$CFG" != "" ] || { [ "$HOME" != "" ] && CFG="$HOME/.config" } || exit 2
+  [ "$CFG" != "" ] || { [ "$HOME" != "" ] && CFG="$HOME/.config"; } || exit 2
   CFG="$CFG/ovpn-leak/config"
   echo "Using default config: $CFG"
 fi
@@ -53,7 +53,6 @@ INSERT_TO="A"
 CHAIN="ovpn_leak"
 
 CHAIN_OUTPUT="OUTPUT"
-CHAIN_FORWARD="FORWARD"
 CHAIN_NAT_OUTPUT="OUTPUT"
 CHAIN_NAT_POSTROUTING="POSTROUTING"
 
