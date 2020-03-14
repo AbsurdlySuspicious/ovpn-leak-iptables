@@ -103,6 +103,13 @@ function toggle {
   inject $1 nat $CHAIN_NAT_POSTROUTING -j $TCHAIN_NAT_POST 2>/dev/null
 }
 
+function clean {
+  toggle del 2>/dev/null
+  del_chain filter $CHAIN
+  del_chain nat $TCHAIN_NAT_OUT 2>/dev/null
+  del_chain nat $TCHAIN_NAT_POST 2>/dev/null
+}
+
 if mode "on"; then
   toggle add
 fi
@@ -111,7 +118,12 @@ if mode "off"; then
   toggle del
 fi
 
+if mode "clean"; then
+  clean
+fi
+
 if mode "setup"; then
+  clean 2>/dev/null
   new_chain filter $CHAIN || exit 3
 
   if [ "$_has_strict" == 1 ]; then
@@ -155,13 +167,6 @@ if mode "setup"; then
   iptables -A $CHAIN -m state --state RELATED,ESTABLISHED -j ACCEPT
   iptables -A $CHAIN -j $FINAL_RULE
 
-fi
-
-if mode "clean"; then
-  toggle del 2>/dev/null
-  del_chain filter $CHAIN
-  del_chain nat $TCHAIN_NAT_OUT 2>/dev/null
-  del_chain nat $TCHAIN_NAT_POST 2>/dev/null
 fi
 
 if [ "$VALID_MODE" != "1" ]; then
