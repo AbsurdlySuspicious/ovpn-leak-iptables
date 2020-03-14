@@ -54,6 +54,7 @@ function cfgerr {
 FINAL_RULE="DROP"
 INSERT_TO="A"
 CHAIN="ovpn_leak"
+WHITELIST=""
 
 CHAIN_OUTPUT="OUTPUT"
 CHAIN_NAT_OUTPUT="OUTPUT"
@@ -187,6 +188,10 @@ if mode "setup"; then
       iptables -t nat -A $TCHAIN_NAT_POST -d $E_GW -o $E_DEV -j MASQUERADE
     fi
   done
+
+  if [ "$WHITELIST" != "" ]; then
+    iptables -A $CHAIN -d "$WHITELIST" -j ACCEPT
+  fi
 
   iptables -A $CHAIN -d 127.0.0.0/8,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8 -j ACCEPT
   iptables -A $CHAIN -m state --state RELATED,ESTABLISHED -j ACCEPT
