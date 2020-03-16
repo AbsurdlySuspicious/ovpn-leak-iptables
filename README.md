@@ -130,3 +130,9 @@ You can add directory where the repo is cloned to your path, for example:
 ~ > echo 'PATH=$PATH:$HOME/.local/share/ovpn-leak' >> .bashrc
 ```
 
+## License
+
+This repository is licensed under MIT
+
+Check [LICENSE](LICENSE) file for details
+
