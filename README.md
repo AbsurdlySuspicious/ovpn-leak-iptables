@@ -106,7 +106,7 @@ COMMIT
 
 Before using the script, you should specify all endpoints (VPN servers)
 you'll be using in config, as well as some optional parameters if you need it.
-Consult the [config help](CONFIG_HELP.md) and [config exmaple](example_config)
+Consult the [config help](CONFIG_HELP.md) and [config exmaple](config_example)
 for detailed explanation of each option and reference.
 
 Usage:
