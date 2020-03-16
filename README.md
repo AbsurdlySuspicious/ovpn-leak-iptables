@@ -52,6 +52,11 @@ uses DNAT and MASQUERADE targets of iptables `nat` table.
 On the contrary, if strict mode is enabled, you won't be able
 to reach non-whitelisted ports when rules are enabled and VPN client isn't working.
 
+### DNS leaking
+
+This script allows to access private subnets. If your router or any other device in local network works as dns server and your system is configured
+to use it (either manually or trough DHCP) this may lead to your dns requests leak outside VPN. Configure your resolv.conf or additional iptables rules carefully to prevent this.
+
 ### Rules example
 
 These rules are generated for example config:
