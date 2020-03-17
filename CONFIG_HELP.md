@@ -124,7 +124,7 @@ Applies for both filter chain and nat chains.
 
 Examples:
 - `A` - append jump rules to the end
-- `0` - insert jump rules to beginnng
+- `1` - insert jump rules to beginnng
 
 ### `CHAIN`
 
