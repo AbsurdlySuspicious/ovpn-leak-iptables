@@ -5,6 +5,20 @@ iptables rules preventing packets from leaking to your real gateway.
 It's meant to be used with openvpn, but will work with any 
 tun device based vpn clients. 
 
+<!-- vim-markdown-toc GFM -->
+
+* [Rationale](#rationale)
+* [How it works](#how-it-works)
+  * [Strict endpoints](#strict-endpoints)
+  * [DNS leaking](#dns-leaking)
+  * [Rules example](#rules-example)
+* [Usage](#usage)
+  * [Making changes permamnent](#making-changes-permamnent)
+* [Installation](#installation)
+* [License](#license)
+
+<!-- vim-markdown-toc -->
+
 ## Rationale
 
 A common problem with openvpn is that any reconnection,
