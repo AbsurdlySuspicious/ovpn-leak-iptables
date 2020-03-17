@@ -43,8 +43,8 @@ On `setup` command this script creates new iptables chain that will ACCEPT **onl
 - packets going to RFC 1918 private subnets and localhost (192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 127.0.0.0/8)
 - packets within established connections
 
-That means any packets going to the (routable) internet addresses not through your VPN
-will be dropped, but any packets to going private subnets (like your physical local network) and input connections 
+That means any packets going to the (routable) internet addresses not through your VPN tun device
+will be dropped, but any packets going to private subnets (like your physical local network) and input connections 
 will be allowed. Check the Rules example below for details.
 
 On `on` command script will inject this chain to `filter` table's OUTPUT chain,
@@ -68,8 +68,8 @@ to reach non-whitelisted ports when rules are enabled and VPN client isn't worki
 
 ### DNS leaking
 
-This script allows to access private subnets. If your router or any other device in local network works as dns server and your system is configured
-to use it (either manually or trough DHCP) this may lead to your dns requests leak outside VPN. Configure your resolv.conf or additional iptables rules carefully to prevent this.
+This script allows access to private subnets. If your router or any other device in local network works as dns server and your system is configured
+to use it (either manually or by DHCP) this may lead to your dns requests leak. Configure your resolv.conf or additional iptables rules carefully to prevent this.
 
 ### Rules example
 
@@ -156,7 +156,7 @@ In any case, after any config changes you should run `setup` and `on` again, oth
 ### Making changes permamnent
 
 There's two ways to make the rules permanent:
-1. Add `ovpn-leak setup` and `ovpn-leak on` commands to to autorun according to your disto guidelines
+1. Add `ovpn-leak setup` and `ovpn-leak on` commands to autorun according to your distro guidelines
 2. Use `iptables-save`
 
 If you're using iptables save, you should re-save the rules after any config change.
