@@ -195,7 +195,7 @@ so you won't need to specify `-c` option every time you use the script
 You can add directory where the repo is cloned to your path, for example:
 
 ```
-~ > git clone XXX .local/share/ovpn-leak
+~ > git clone https://github.com/AbsurdlySuspicious/ovpn-leak-iptables.git .local/share/ovpn-leak
 ~ > echo 'PATH=$PATH:$HOME/.local/share/ovpn-leak' >> .bashrc
 ```
 
